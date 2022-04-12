@@ -1,6 +1,7 @@
 import random
 import smtplib
 import ssl
+import getpass
 
 from colorama import Fore
 
@@ -39,22 +40,25 @@ def getUserInputBoolean(question):
 run = True
 
 
-def sendEmail(fromEmail, toEmail, subject, message, server, port):
+def sendEmail(fromEmail, toEmail, subject, message, server, port, auth=False, username=None, password=None):
     context = ssl.create_default_context()
     with smtplib.SMTP(server, port=port) as server:
         try:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
-            server.mail(fromEmail)
-            server.rcpt(toEmail)
-            server.data(f"From: {fromEmail}\nTo: {toEmail}\nSubject: {subject}\n\n{message}")
+            if auth:
+                server.login(username, password)
+
+            # server.mail(fromEmail)
+            # server.rcpt(toEmail)
+            # server.data(f"From: {fromEmail}\nTo: {toEmail}\nSubject: {subject}\n\n{message}")
+            server.sendmail(fromEmail, toEmail, f"From: {fromEmail}\nTo: {toEmail}\nSubject: {subject}\n\n{message}")
             server.quit()
+            print(f"{good}Email sent to: {toEmail}, From: {fromEmail}")
         except Exception as e:
             print(f"{error}{Fore.RED}Error: {Fore.RESET} {e}")
-            return False
-        finally:
-            print(f"{good}Email sent to: {toEmail}, From: {fromEmail}")
+
 
 
 while run:
@@ -77,7 +81,10 @@ while run:
             subject = input(userinput + "Subject: ")
             message = input(userinput + "Message: ")
             if getUserInputBoolean("Authenticate?"):
-                print("test")
+                username = input(userinput + "Username: ")
+                #password = getpass.getpass(userinput + "Password: ")
+                password = input(userinput + "Password: ")
+                sendEmail(fromEmail, toEmail, subject, message, "smtp.gmail.com", 587, True, username, password)
             else:
                 server = input(userinput + "Enter the server (blank for default): ")
                 if server == "":
