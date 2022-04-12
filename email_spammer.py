@@ -2,6 +2,7 @@ import random
 import smtplib
 import ssl
 import getpass
+from email.mime.multipart import MIMEMultipart
 
 from colorama import Fore
 
@@ -21,10 +22,7 @@ error = f"[{Fore.RED}E{Fore.RESET}] "
 info = f"[{Fore.BLUE}I{Fore.RESET}] "
 warn = f"[{Fore.YELLOW}!{Fore.RESET}] "
 userinput = f"[{Fore.CYAN}?{Fore.RESET}] "
-
-randomSubject = False
-randomBody = False
-
+run = True
 
 def getUserInputBoolean(question):
     while True:
@@ -37,10 +35,7 @@ def getUserInputBoolean(question):
             print("Please enter 'y' or 'n'")
 
 
-run = True
-
-
-def sendEmail(fromEmail, toEmail, subject, message, server, port, auth=False, username=None, password=None):
+def sendEmail(fakeEmail, toEmail, subject, content, server, port, auth=False, username=None, password=None):
     context = ssl.create_default_context()
     with smtplib.SMTP(server, port=port) as server:
         try:
@@ -49,16 +44,21 @@ def sendEmail(fromEmail, toEmail, subject, message, server, port, auth=False, us
             server.ehlo()
             if auth:
                 server.login(username, password)
+                payload = MIMEMultipart('alternative')
+                payload.set_charset("utf-8")
 
-            # server.mail(fromEmail)
-            # server.rcpt(toEmail)
-            # server.data(f"From: {fromEmail}\nTo: {toEmail}\nSubject: {subject}\n\n{message}")
-            server.sendmail(fromEmail, toEmail, f"From: {fromEmail}\nTo: {toEmail}\nSubject: {subject}\n\n{message}")
-            server.quit()
-            print(f"{good}Email sent to: {toEmail}, From: {fromEmail}")
+                payload["From"] = fromEmail.split('@')[0] + "<" + fromEmail + ">"
+                payload['Subject'] = subject
+                payload["To"] = toEmail
+                # server.sendmail(fromEmail, toEmail, payload.as_string())
+                server.send_message(from_addr=username, to_addrs=toEmail, msg=payload)
+            else:
+                messageSend = f"From: {fakeEmail.split('@')[0]} <{fakeEmail}>\nTo: {toEmail.split('@')[0]} <{toEmail}>\nSubject: {subject}\n\n{content}"
+                server.sendmail(fakeEmail, toEmail, messageSend.encode())
+                server.close()
+            print(f"{good}Email sent to: {toEmail}, From: {fakeEmail}")
         except Exception as e:
             print(f"{error}{Fore.RED}Error: {Fore.RESET} {e}")
-
 
 
 while run:
@@ -79,25 +79,26 @@ while run:
                 print(f"{warn}Email " + toEmail + " is not valid")
                 continue
             subject = input(userinput + "Subject: ")
-            message = input(userinput + "Message: ")
+            msg = input(userinput + "Message: ")
+            server = input(userinput + "Enter the server (blank for default): ")
+            if server == "":
+                server = random.choice(["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
+                                        "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
+                                        "gmail-smtp-in.l.google.com"])
+            port = input(userinput + "Enter the port (blank for default): ")
+            if port == "":
+                port = 25
             if getUserInputBoolean("Authenticate?"):
-                username = input(userinput + "Username: ")
-                #password = getpass.getpass(userinput + "Password: ")
+                username = input(userinput + "Username (Email): ")
                 password = input(userinput + "Password: ")
-                sendEmail(fromEmail, toEmail, subject, message, "smtp.gmail.com", 587, True, username, password)
+                sendEmail(fromEmail, toEmail, subject, msg, "smtp.gmail.com", 25, True, username, password)
             else:
-                server = input(userinput + "Enter the server (blank for default): ")
-                if server == "":
-                    server = random.choice(["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
-                                            "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
-                                            "gmail-smtp-in.l.google.com"])
-                port = input(userinput + "Enter the port (blank for default): ")
-                if port == "":
-                    port = 25
 
-                sendEmail(fromEmail, toEmail, subject, message, server, port)
+                sendEmail(fromEmail, toEmail, subject, msg, server, port)
         case "2":
             emails = []
+            subjects = []
+            contents = []
             if getUserInputBoolean("Use emails from file"):
                 filepath = input(userinput + "Enter the filepath: ")
                 filepath = filepath.replace("\"", "")
@@ -123,15 +124,60 @@ while run:
                         emails.append(email.replace("\n", ""))
                     if not getUserInputBoolean("Add another email?"):
                         break
+            if getUserInputBoolean("Use random subjects?"):
+                if getUserInputBoolean("Use contents from file?"):
+                    filepath = input(userinput + "Enter the filepath: ")
+                    if not filepath.__contains__(".txt"):
+                        print(f"{error}Filepath must end with .txt")
+                        continue
+                    try:
+                        with open(filepath, "r") as f:
+                            for content in f.readlines():
+                                contents.append(content.replace("\n", ""))
+                    except Exception as e:
+                        print(error + "File does not exist")
+                        continue
+                else:
+                    while True:
+                        content = input(userinput + "Enter content: ")
+                        contents.append(content.replace("\n", ""))
+                        if not getUserInputBoolean("Add another content?"):
+                            break
+                print(f"{info}Contents: {Fore.YELLOW}{contents}{Fore.RESET}")
+            else:
+                subjects.append(input(userinput + "Enter subject: "))
+
+            if getUserInputBoolean("Use random contents?"):
+                if getUserInputBoolean("Use random contents from file?"):
+                    filepath = input(userinput + "Enter the filepath: ")
+                    if not filepath.__contains__(".txt"):
+                        print(f"{error}Filepath must end with .txt")
+                        continue
+                    try:
+                        with open(filepath, "r") as f:
+                            for content in f.readlines():
+                                contents.append(content.replace("\n", ""))
+                    except Exception as e:
+                        print(error + "File does not exist")
+                        continue
+                    else:
+                        while True:
+                            content = input(userinput + "Enter content: ")
+                            contents.append(content)
+                            if not getUserInputBoolean("Add another content?"):
+                                break
+                else:
+                    contents.append(input(userinput + "Enter content: "))
+                print(f"{info} contents: {Fore.YELLOW}{str(contents)}{Fore.RESET}")
+            else:
+                contents.append(input(userinput + "Enter content: "))
+
 
             print("Emails: " + Fore.YELLOW + str(emails) + Fore.RESET)
             toEmail = input(userinput + "Enter the email you want to send to: ")
             if not toEmail.__contains__("@"):
                 print(f"{warn}Email " + toEmail + " is not valid")
                 continue
-
-            subject = input(userinput + "Subject: ")
-            message = input(userinput + "Message: ")
 
             server = input(userinput + "Enter the server (blank for default): ")
             if server == "":
@@ -142,9 +188,10 @@ while run:
             if port == "":
                 port = 25
             for email in emails:
-                sendEmail(email, toEmail, subject, message, server, port)
+                sendEmail(email, toEmail, random.choice(subjects), random.choice(contents), server, port)
             print(good + "Emails sent")
 
         case "3":
             print(info + "Exiting...")
             run = False
+
