@@ -38,13 +38,13 @@ def getUserInputBoolean(question):
 
 def sendEmail(fakeEmail, toEmail, subject, content, server, port, auth=False, username=None, password=None):
     context = ssl.create_default_context()
-    with smtplib.SMTP(server, port=port) as server:
+    with smtplib.SMTP(server, port=port) as s:
         try:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
+            s.ehlo()
+            s.starttls(context=context)
+            s.ehlo()
             if auth:
-                server.login(username, password)
+                s.login(username, password)
                 name = input(userinput + "Enter your for fake ac: ")
                 payload = MIMEText(content)
                 payload.set_charset("utf-8")
@@ -53,14 +53,13 @@ def sendEmail(fakeEmail, toEmail, subject, content, server, port, auth=False, us
                 payload['Subject'] = subject
                 payload["To"] = f"{toEmail.split('@')[0]} <{toEmail}>"
                 payload['Content-Type'] = "text/html; charset=utf-8"
-                print(payload.as_string())
                 # server.sendmail(fromEmail, toEmail, payload.as_string())
-                server.send_message(from_addr=username, to_addrs=toEmail, msg=payload)
+                s.send_message(from_addr=username, to_addrs=toEmail, msg=payload)
             else:
                 messageSend = f"From: {fakeEmail.split('@')[0]} <{fakeEmail}>\nTo: {toEmail.split('@')[0]} <{toEmail}>\nSubject: {subject}\n\n{content}"
-                server.sendmail(fakeEmail, toEmail, messageSend.encode())
-                server.close()
-            print(f"{good}Email sent to: {toEmail}, From: {fakeEmail}, Subject: {subject}, Server: {server}:{port}")
+                s.sendmail(fakeEmail, toEmail, messageSend.encode())
+                s.close()
+            print(f"{good}Email sent to: {Fore.CYAN}{toEmail}{Fore.RESET}, From: {Fore.CYAN}{fakeEmail}{Fore.RESET}, Subject: {Fore.GREEN}{subject}{Fore.GREEN}, Server: {Fore.YELLOW}{server}:{port}{Fore.RESET}")
         except Exception as e:
             print(f"{error}{Fore.RED}Error: {Fore.RESET} {e}")
 
@@ -182,9 +181,9 @@ while run:
                 print(f"{warn}Email " + toEmail + " is not valid")
                 continue
 
-            server = input(userinput + "Enter the server (blank for default): ")
-            if server == "":
-                server = random.choice(["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
+            serverStr = input(userinput + "Enter the server (blank for default): ")
+            if serverStr == "":
+                serverStr = random.choice(["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
                                         "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
                                         "gmail-smtp-in.l.google.com"])
             port = input(userinput + "Enter the port (blank for default): ")
@@ -204,7 +203,7 @@ while run:
                 for i in range(count):
                     content = random.choice(contents)
                     subject = random.choice(subjects)
-                    sendEmail(email, toEmail, subject, content, server, port)
+                    sendEmail(email, toEmail, subject, content, serverStr, port)
             print(good + "Emails sent")
 
         case "3":
