@@ -1,6 +1,7 @@
 # Email Spammer
-
 ----
+
+Btw this code is not optimized at all
 
 How to use:
  1. Download the latest version of the script from `release page`
