@@ -1,7 +1,8 @@
 import random
-import smtplib
 import ssl
+import smtplib
 import getpass
+from datetime import datetime
 from email.mime.multipart import *
 
 from colorama import Fore
@@ -24,8 +25,9 @@ warn = f"[{Fore.YELLOW}!{Fore.RESET}] "
 userinput = f"[{Fore.CYAN}?{Fore.RESET}] "
 run = True
 servers = ["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
-                                        "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
-                                        "gmail-smtp-in.l.google.com"]
+           "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
+           "gmail-smtp-in.l.google.com"]
+
 
 def getUserInputBoolean(question):
     while True:
@@ -43,6 +45,7 @@ def sendEmail(fakeEmail, toEmail, subject, content, server, port, auth=False, us
     with smtplib.SMTP(server, port=port) as s:
         try:
             s.ehlo()
+            # noah.newman@watershedschool.org
             s.starttls(context=context)
             s.ehlo()
             if auth:
@@ -62,9 +65,11 @@ def sendEmail(fakeEmail, toEmail, subject, content, server, port, auth=False, us
 
                 s.sendmail(fakeEmail, toEmail, messageSend.encode())
                 s.close()
-            print(f"{good}Email sent to: {Fore.CYAN}{toEmail}{Fore.RESET}, From: {Fore.CYAN}{fakeEmail}{Fore.RESET}, Subject: {Fore.GREEN}{subject}{Fore.RESET}, Server: {Fore.YELLOW}{server}:{port}{Fore.RESET}")
+            print(
+                f"{good}Email sent to: {Fore.CYAN}{toEmail}{Fore.RESET}, From: {Fore.CYAN}{fakeEmail}{Fore.RESET}, Subject: {Fore.GREEN}{subject}{Fore.RESET}, Server: {Fore.YELLOW}{server}:{port}{Fore.RESET}, Auth: {Fore.BLUE}{auth}{Fore.RESET}, Time: {Fore.BLUE}{datetime.now().strftime('%H:%M:%S')}{Fore.RESET}")
         except Exception as e:
             print(f"{error}{Fore.RED}Error ({fakeEmail}): {Fore.RESET} {e}")
+
 
 while run:
     print("[" + Fore.BLUE + "Main" + Fore.RESET + "] Menu")
@@ -184,8 +189,9 @@ while run:
             serverStr = input(userinput + "Enter the server (blank for default): ")
             if serverStr == "":
                 serverStr = random.choice(["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
-                                        "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
-                                        "gmail-smtp-in.l.google.com"])
+                                           "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
+                                           "alt5.gmail-smtp-in.l.google.com",
+                                           "gmail-smtp-in.l.google.com"])
             port = input(userinput + "Enter the port (blank for default): ")
             if port == "":
                 port = 25
@@ -198,9 +204,9 @@ while run:
             if getUserInputBoolean("Send multiple emails per account?"):
                 count = int(input(userinput + "Enter the number of emails to send: "))
             print(f"{info}Sending {count} {'emails' if count > 1 else 'email'} per account")
-
             for email in emails:
                 for i in range(count):
+                    email = random.choice(emails)
                     content = random.choice(contents)
                     content = content.replace("{toEmail}", toEmail)
                     content = content.replace("{toName}", toEmail.split("@")[0])
