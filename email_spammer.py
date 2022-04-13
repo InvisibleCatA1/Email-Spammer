@@ -23,7 +23,9 @@ info = f"[{Fore.BLUE}I{Fore.RESET}] "
 warn = f"[{Fore.YELLOW}!{Fore.RESET}] "
 userinput = f"[{Fore.CYAN}?{Fore.RESET}] "
 run = True
-
+servers = ["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
+                                        "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
+                                        "gmail-smtp-in.l.google.com"]
 
 def getUserInputBoolean(question):
     while True:
@@ -56,13 +58,13 @@ def sendEmail(fakeEmail, toEmail, subject, content, server, port, auth=False, us
                 # server.sendmail(fromEmail, toEmail, payload.as_string())
                 s.send_message(from_addr=username, to_addrs=toEmail, msg=payload)
             else:
-                messageSend = f"From: {fakeEmail.split('@')[0]} <{fakeEmail}>\nTo: {toEmail.split('@')[0]} <{toEmail}>\nSubject: {subject}\n\n{content}"
+                messageSend = f"From: {fakeEmail.split('@')[0]} <{fakeEmail}>\nT: {toEmail.split('@')[0]} <{toEmail}>\nSubject: {subject}\n\n{content}"
+
                 s.sendmail(fakeEmail, toEmail, messageSend.encode())
                 s.close()
-            print(f"{good}Email sent to: {Fore.CYAN}{toEmail}{Fore.RESET}, From: {Fore.CYAN}{fakeEmail}{Fore.RESET}, Subject: {Fore.GREEN}{subject}{Fore.GREEN}, Server: {Fore.YELLOW}{server}:{port}{Fore.RESET}")
+            print(f"{good}Email sent to: {Fore.CYAN}{toEmail}{Fore.RESET}, From: {Fore.CYAN}{fakeEmail}{Fore.RESET}, Subject: {Fore.GREEN}{subject}{Fore.RESET}, Server: {Fore.YELLOW}{server}:{port}{Fore.RESET}")
         except Exception as e:
-            print(f"{error}{Fore.RED}Error: {Fore.RESET} {e}")
-
+            print(f"{error}{Fore.RED}Error ({fakeEmail}): {Fore.RESET} {e}")
 
 while run:
     print("[" + Fore.BLUE + "Main" + Fore.RESET + "] Menu")
@@ -85,9 +87,7 @@ while run:
             msg = input(userinput + "Message: ")
             server = input(userinput + "Enter the server (blank for default): ")
             if server == "":
-                server = random.choice(["alt1.gmail-smtp-in.l.google.com", "alt2.gmail-smtp-in.l.google.com",
-                                        "alt3.gmail-smtp-in.l.google.com", "alt4.gmail-smtp-in.l.google.com",
-                                        "gmail-smtp-in.l.google.com"])
+                server = random.choice(servers)
             port = input(userinput + "Enter the port (blank for default): ")
             if port == "":
                 port = 25
@@ -197,13 +197,25 @@ while run:
             count = 1
             if getUserInputBoolean("Send multiple emails per account?"):
                 count = int(input(userinput + "Enter the number of emails to send: "))
-            print(f"{info}Sending {count} emails per account")
+            print(f"{info}Sending {count} {'emails' if count > 1 else 'email'} per account")
 
             for email in emails:
                 for i in range(count):
                     content = random.choice(contents)
+                    content = content.replace("{toEmail}", toEmail)
+                    content = content.replace("{toName}", toEmail.split("@")[0])
+                    content = content.replace("{fromEmail}", email)
+                    content = content.replace("{fromName}", email.split("@")[0])
+                    content = content.replace("{randomEmail}", random.choice(emails))
+                    content = content.replace("{randomName}", random.choice(emails).split("@")[0])
                     subject = random.choice(subjects)
-                    sendEmail(email, toEmail, subject, content, serverStr, port)
+                    subject = subject.replace("{toEmail}", toEmail)
+                    subject = subject.replace("{toName}", toEmail.split("@")[0])
+                    subject = subject.replace("{fromEmail}", email)
+                    subject = subject.replace("{fromName}", email.split("@")[0])
+                    subject = subject.replace("{randomEmail}", random.choice(emails))
+                    subject = subject.replace("{randomName}", random.choice(emails).split("@")[0])
+                    sendEmail(email, toEmail, subject, content, random.choice(servers), port)
             print(good + "Emails sent")
 
         case "3":
